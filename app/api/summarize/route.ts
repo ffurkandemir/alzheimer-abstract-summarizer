@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Call Hugging Face Inference API
     const hfResponse = await fetch(
-      'https://api-inference.huggingface.co/models/furkanyagiz/flan-t5-base-alzheimer-ultra-safe',
+      'https://router.huggingface.co/hf-inference/models/furkanyagiz/flan-t5-base-alzheimer-ultra-safe',
       {
         method: 'POST',
         headers: {
