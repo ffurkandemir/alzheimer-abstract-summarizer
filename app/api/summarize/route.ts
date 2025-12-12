@@ -3,13 +3,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { isRateLimited } from '@/lib/rate-limit'
 
-// 🔹 FastAPI backend URL'in (senin VPS'in)
+// VPS'teki FastAPI backend'in
 const BACKEND_URL = 'http://68.183.68.119:8000/summarize'
 
-// İstek body şeması
+// Request body şeması
 const RequestSchema = z.object({
   abstract: z.string().min(1, 'abstract is required'),
 })
+
+// Backend'in döndüreceği JSON tipi
+interface BackendResponse {
+  summary: string
+}
 
 // IP çekmek için ufak helper
 function getClientIp(request: NextRequest): string {
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const { abstract } = validation.data
 
-    // 🔹 VPS'teki FastAPI backend'e istek at
+    // VPS'teki FastAPI backend'e istek at
     const backendRes = await fetch(BACKEND_URL, {
       method: 'POST',
       headers: {
@@ -63,7 +68,6 @@ export async function POST(request: NextRequest) {
 
     const text = await backendRes.text()
 
-    // Backend HTTP olarak hata dönerse
     if (!backendRes.ok) {
       console.error('Backend error:', backendRes.status, text)
       return NextResponse.json(
@@ -76,10 +80,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // JSON parse
-    let data: any
+    // JSON parse (tipli)
+    let data: BackendResponse
     try {
-      data = JSON.parse(text)
+      data = JSON.parse(text) as BackendResponse
     } catch (e) {
       console.error('Failed to parse backend JSON:', e, text)
       return NextResponse.json(
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const summary = data?.summary
+    const { summary } = data
 
     if (!summary || typeof summary !== 'string') {
       console.error('Backend returned invalid summary:', data)
